@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Fast Apply",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Send automated job application emails with your CV in one click.",
   "permissions": [
     "identity",
@@ -19,9 +19,10 @@
     ]
   },
   "oauth2": {
-    "client_id": "846345410439-3lmad3hk8cmesltuch99macgl9024p71.apps.googleusercontent.com",
+    "client_id": "846345410439-vh2uqp84t7c2j6evr624nuhbdvmro9u4.apps.googleusercontent.com",
     "scopes": [
-      "https://www.googleapis.com/auth/gmail.send"
+      "https://www.googleapis.com/auth/gmail.send",
+      "https://www.googleapis.com/auth/userinfo.email"
     ]
   },
   "background": {
