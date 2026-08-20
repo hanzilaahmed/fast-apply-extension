@@ -35,18 +35,28 @@
         <div class="auth-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="#ea4335"><path d="M12 5c1.58 0 2.97.55 4.09 1.45l3.07-3.07C17.3 1.62 14.82 1 12 1 7.42 1 3.52 3.63 1.65 7.45l3.66 2.84C6.18 7.37 8.84 5 12 5z"/></svg>
         </div>
-        <p class="auth-desc">Connect the Gmail account you want to send application emails from.</p>
+        <p class="auth-desc">Connect or enter the Gmail account you want to send application emails from.</p>
         <button id="auth-btn" class="secondary-btn">
             Connect Google Account
         </button>
+        <div style="margin-top: 14px; text-align: center; border-top: 1px dashed rgba(148, 163, 184, 0.3); padding-top: 12px;">
+            <span style="font-size: 11px; color: #64748b; font-weight: 500;">OR type your Gmail address directly:</span>
+            <div class="input-with-paste" style="margin-top: 8px;">
+                <input type="email" id="manual-email-input" placeholder="e.g. yourname@gmail.com">
+                <button id="save-manual-email-btn" class="paste-btn">Set Gmail</button>
+            </div>
+        </div>
     </div>
 
     <!-- Main Section -->
     <div class="main-section" id="main-section" style="display: none;">
         <!-- User Email Bar -->
-        <div class="user-bar">
-            <span class="user-label">From Gmail:</span>
-            <span id="popup-user-email" class="user-email">...</span>
+        <div class="user-bar" style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
+                <span class="user-label">From Gmail:</span>
+                <span id="popup-user-email" class="user-email" style="font-weight: 600;">...</span>
+            </div>
+            <button id="edit-email-btn" class="paste-btn" style="padding: 2px 8px; font-size: 11px; background: transparent; border: 1px solid rgba(148, 163, 184, 0.4); color: #64748b;" title="Change Gmail Address">Change</button>
         </div>
 
         <!-- HR Email Input with Paste Button -->
@@ -60,7 +70,10 @@
 
         <!-- Email Pattern / Template Selector -->
         <div class="input-group">
-            <label for="pattern-select">Select Email Pattern</label>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="pattern-select">Select Email Pattern</label>
+                <a href="#" id="edit-patterns-link" style="font-size: 11px; color: #2563eb; text-decoration: none; font-weight: 600;">+ Edit Patterns</a>
+            </div>
             <select id="pattern-select" class="pattern-dropdown">
                 <!-- Dynamically populated -->
             </select>
@@ -78,6 +91,11 @@
             <div id="spinner" class="spinner" style="display:none;"></div>
         </button>
 
+        <!-- Manage Templates & CV Primary Button -->
+        <button id="manage-templates-btn" class="secondary-btn" style="margin-top: 10px; width: 100%; font-size: 13px; padding: 10px; font-weight: 600; cursor: pointer;">
+            ⚙️ Manage Templates, Subject & CV
+        </button>
+
         <!-- Out of Credits Ad Box -->
         <div id="ad-reward-box" class="ad-reward-box" style="display: none;">
             <p class="ad-prompt-text">⚠️ 0 applications left today!</p>
@@ -89,9 +107,7 @@
         </div>
 
         <div class="footer-links">
-            <a href="#" id="options-link">Manage Templates</a>
-            <span class="dot">•</span>
-            <a href="#" id="manual-ad-link">Get +5 Credits</a>
+            <a href="#" id="manual-ad-link">Get +5 Rewarded Credits</a>
         </div>
     </div>
     

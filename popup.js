@@ -18,6 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const adRewardBox = document.getElementById('ad-reward-box');
     const watchAdBtn = document.getElementById('watch-ad-btn');
     const themeDots = document.querySelectorAll('.theme-dot');
+    
+    const manualEmailInput = document.getElementById('manual-email-input');
+    const saveManualEmailBtn = document.getElementById('save-manual-email-btn');
+    const editEmailBtn = document.getElementById('edit-email-btn');
+    const manageTemplatesBtn = document.getElementById('manage-templates-btn');
+    const editPatternsLink = document.getElementById('edit-patterns-link');
 
     let currentCredits = 5;
     let loadedPatterns = [];
@@ -178,17 +184,75 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Check Google Authentication & fetch User Profile Email
-    chrome.identity.getAuthToken({ interactive: false }, (token) => {
-        if (chrome.runtime.lastError || !token) {
+    // Open Options / Manage Templates Page
+    function openOptionsPage() {
+        if (chrome.runtime.openOptionsPage) {
+            chrome.runtime.openOptionsPage();
+        } else {
+            window.open(chrome.runtime.getURL('options.html'));
+        }
+    }
+
+    if (manageTemplatesBtn) {
+        manageTemplatesBtn.addEventListener('click', openOptionsPage);
+    }
+    if (editPatternsLink) {
+        editPatternsLink.addEventListener('click', (e) => { e.preventDefault(); openOptionsPage(); });
+    }
+    if (optionsLink) {
+        optionsLink.addEventListener('click', (e) => { e.preventDefault(); openOptionsPage(); });
+    }
+
+    // Manual Email Setup & Edit Handlers
+    if (saveManualEmailBtn && manualEmailInput) {
+        saveManualEmailBtn.addEventListener('click', () => {
+            const emailVal = manualEmailInput.value.trim();
+            if (!emailVal || !emailVal.includes('@')) {
+                showStatus('Please enter a valid Gmail address.', 'error');
+                return;
+            }
+            chrome.storage.local.set({ userEmail: emailVal }, () => {
+                userEmailText.textContent = emailVal;
+                authSection.style.display = 'none';
+                mainSection.style.display = 'block';
+                loadPatterns();
+                syncCredits();
+                showStatus('Gmail address saved!', 'success');
+            });
+        });
+    }
+
+    if (editEmailBtn) {
+        editEmailBtn.addEventListener('click', () => {
             authSection.style.display = 'block';
             mainSection.style.display = 'none';
-        } else {
+            if (userEmailText.textContent && userEmailText.textContent.includes('@')) {
+                manualEmailInput.value = userEmailText.textContent;
+            }
+        });
+    }
+
+    // Check saved user email or Google Auth
+    chrome.storage.local.get(['userEmail'], (res) => {
+        if (res.userEmail) {
+            userEmailText.textContent = res.userEmail;
             authSection.style.display = 'none';
             mainSection.style.display = 'block';
-            fetchUserProfileEmail(token);
             loadPatterns();
             syncCredits();
+        } else {
+            chrome.identity.getAuthToken({ interactive: false }, (token) => {
+                if (chrome.runtime.lastError || !token) {
+                    authSection.style.display = 'block';
+                    mainSection.style.display = 'none';
+                } else {
+                    authSection.style.display = 'none';
+                    mainSection.style.display = 'block';
+                    fetchUserProfileEmail(token);
+                    loadPatterns();
+                    syncCredits();
+                }
+            });
         }
     });
 
@@ -200,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             if (data.email) {
                 userEmailText.textContent = data.email;
+                chrome.storage.local.set({ userEmail: data.email });
             } else {
                 userEmailText.textContent = 'Connected Account';
             }
@@ -215,7 +280,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Fallback for local testing when OAuth Client ID is not registered
                 authSection.style.display = 'none';
                 mainSection.style.display = 'block';
-                userEmailText.textContent = 'demo.applicant@gmail.com';
+                const defaultEmail = 'your.email@gmail.com';
+                userEmailText.textContent = defaultEmail;
+                chrome.storage.local.set({ userEmail: defaultEmail });
                 loadPatterns();
                 syncCredits();
                 showStatus('Connected (Demo Mode)', 'success');
