@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Option 2: Open Dedicated Popup Window for Rewarded Ad
     function openRewardedAdPage() {
         chrome.storage.local.get(['rewardWebUrl'], (res) => {
-            const defaultUrl = 'https://fast-apply-rewards.vercel.app';
+            const defaultUrl = 'https://fast-apply-extension.vercel.app';
             const targetUrl = res.rewardWebUrl || defaultUrl;
             const extId = chrome.runtime.id || '';
             const finalUrl = targetUrl.includes('?') 
