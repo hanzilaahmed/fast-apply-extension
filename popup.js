@@ -227,13 +227,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check saved user email or Google Auth
     chrome.storage.local.get(['userEmail'], (res) => {
-        if (res.userEmail) {
+        if (res.userEmail && res.userEmail !== 'your.email@gmail.com' && res.userEmail !== 'demo.applicant@gmail.com') {
             if (userEmailText) userEmailText.textContent = res.userEmail;
             if (authSection) authSection.style.display = 'none';
             if (mainSection) mainSection.style.display = 'block';
             loadPatterns();
             syncCredits();
         } else {
+            chrome.storage.local.remove(['userEmail']);
             if (authSection) authSection.style.display = 'block';
             if (mainSection) mainSection.style.display = 'none';
         }
@@ -260,16 +261,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Attempt Google Identity API
             chrome.identity.getAuthToken({ interactive: true }, (token) => {
                 if (chrome.runtime.lastError || !token) {
-                    // Fallback for local testing or un-registered extension ID
-                    const testEmail = 'your.email@gmail.com';
-                    chrome.storage.local.set({ userEmail: testEmail }, () => {
-                        if (userEmailText) userEmailText.textContent = testEmail;
-                        if (authSection) authSection.style.display = 'none';
-                        if (mainSection) mainSection.style.display = 'block';
-                        loadPatterns();
-                        syncCredits();
-                        showStatus('Connected (Demo Mode)', 'success');
-                    });
+                    // Prompt user to enter their real Gmail address directly
+                    showStatus('OAuth notice: Please type your Gmail address in the box below and click "Set Gmail"', 'error');
+                    if (manualEmailInput) {
+                        manualEmailInput.focus();
+                        manualEmailInput.style.borderColor = '#2563eb';
+                    }
                 } else {
                     if (authSection) authSection.style.display = 'none';
                     if (mainSection) mainSection.style.display = 'block';
