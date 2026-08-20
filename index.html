@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast Apply - Earn Rewarded Credits</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- GOOGLE ADSENSE SDK - Replace ca-pub-XXXXXXXXXXXXXXXX with your real AdSense Publisher ID -->
+    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 420px;
+            padding: 28px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 5px;
+            background: linear-gradient(90deg, #2563eb, #10b981, #6366f1);
+        }
+        .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        h1 {
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+        .ad-container {
+            background: #f1f5f9;
+            border: 2px dashed #cbd5e1;
+            border-radius: 14px;
+            padding: 24px 16px;
+            margin-bottom: 20px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3.5px solid rgba(37, 99, 235, 0.2);
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 14px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .ad-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 4px;
+        }
+        .ad-timer {
+            font-size: 13px;
+            color: #475569;
+        }
+        .success-box {
+            display: none;
+        }
+        .success-box .success-icon {
+            font-size: 42px;
+            margin-bottom: 6px;
+        }
+        .success-box h2 {
+            font-size: 18px;
+            color: #059669;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .success-box p {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .claim-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #ffffff;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+            transition: transform 0.15s ease;
+        }
+        .claim-btn:hover {
+            transform: translateY(-1px);
+        }
+        .footer-note {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="icon">⚡</div>
+        <h1>Fast Apply Rewards</h1>
+        <p class="subtitle">Watch full ad to unlock +5 job application credits</p>
+
+        <div class="ad-container" id="ad-box">
+            <!-- Loading State -->
+            <div id="ad-loading">
+                <div class="spinner"></div>
+                <div class="ad-title">Loading Rewarded Video Ad...</div>
+                <div class="ad-timer" id="timer-text">Please keep window focused (5s remaining)</div>
+            </div>
+
+            <!-- Success State -->
+            <div id="ad-success" class="success-box">
+                <div class="success-icon">🎉</div>
+                <h2>+5 Credits Granted!</h2>
+                <p>Credits added to your Fast Apply Chrome Extension.</p>
+            </div>
+        </div>
+
+        <button id="claim-btn" class="claim-btn" style="display: none;">Claim +5 Credits & Close</button>
+
+        <p class="footer-note" id="status-footer">Extension Status: Connecting...</p>
+    </div>
+
+    <script>
+        // 1. Get Extension ID from URL params ?extId=...
+        const urlParams = new URLSearchParams(window.location.search);
+        const extId = urlParams.get('extId');
+        const statusFooter = document.getElementById('status-footer');
+        const adLoading = document.getElementById('ad-loading');
+        const adSuccess = document.getElementById('ad-success');
+        const timerText = document.getElementById('timer-text');
+        const claimBtn = document.getElementById('claim-btn');
+
+        let isExtensionConnected = false;
+
+        // 2. Check Extension Connectivity via chrome.runtime.sendMessage
+        if (extId && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+            chrome.runtime.sendMessage(extId, { action: 'PING_EXTENSION' }, (response) => {
+                if (response && response.status === 'CONNECTED') {
+                    isExtensionConnected = true;
+                    statusFooter.textContent = '✓ Connected to Fast Apply Extension';
+                    statusFooter.style.color = '#059669';
+                } else {
+                    statusFooter.textContent = '⚠️ Extension response pending...';
+                }
+            });
+        } else {
+            statusFooter.textContent = 'ℹ Demo / Standalone Mode';
+        }
+
+        // 3. Simulated Ad Completion / Google AdSense Rewarded Callback
+        let countdown = 5;
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                timerText.textContent = `Please keep window focused (${countdown}s remaining)`;
+            } else {
+                clearInterval(countdownInterval);
+                onAdCompleted();
+            }
+        }, 1000);
+
+        function onAdCompleted() {
+            adLoading.style.display = 'none';
+            adSuccess.style.display = 'block';
+            claimBtn.style.display = 'block';
+
+            // Automatically send reward to Chrome Extension
+            grantRewardToExtension();
+        }
+
+        function grantRewardToExtension() {
+            if (extId && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+                chrome.runtime.sendMessage(extId, { action: 'ADD_REWARD_CREDITS' }, (res) => {
+                    if (res && res.success) {
+                        statusFooter.textContent = `✓ +5 Credits Added! New Total: ${res.newCredits}`;
+                        statusFooter.style.color = '#059669';
+                        
+                        // Auto-close popup window after 2 seconds
+                        setTimeout(() => {
+                            window.close();
+                        }, 2000);
+                    }
+                });
+            }
+        }
+
+        claimBtn.addEventListener('click', () => {
+            grantRewardToExtension();
+            setTimeout(() => { window.close(); }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="popup.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="theme-light">
+    <!-- Theme Switcher Selector Bar -->
+    <div class="theme-switcher-bar">
+        <span class="theme-switcher-title">Theme</span>
+        <div class="theme-dots">
+            <div class="theme-dot dot-light active" data-theme="theme-light" title="Clean White Light"></div>
+            <div class="theme-dot dot-cyber" data-theme="theme-cyber" title="Cyberpunk Slate"></div>
+            <div class="theme-dot dot-violet" data-theme="theme-violet" title="Midnight Violet"></div>
+            <div class="theme-dot dot-emerald" data-theme="theme-emerald" title="Emerald Tech"></div>
+            <div class="theme-dot dot-sunset" data-theme="theme-sunset" title="Sunset Luxury"></div>
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="brand">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2"><path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+            <span>Fast Apply</span>
+        </div>
+        <!-- Credit Counter Badge -->
+        <div class="credit-badge" id="credit-badge" title="Daily application quota. Resets every calendar day.">
+            <span class="bolt">⚡</span>
+            <span id="credit-count">5</span> left today
+        </div>
+    </div>
+    
+    <!-- Auth Section -->
+    <div class="auth-section" id="auth-section">
+        <div class="auth-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#ea4335"><path d="M12 5c1.58 0 2.97.55 4.09 1.45l3.07-3.07C17.3 1.62 14.82 1 12 1 7.42 1 3.52 3.63 1.65 7.45l3.66 2.84C6.18 7.37 8.84 5 12 5z"/></svg>
+        </div>
+        <p class="auth-desc">Connect the Gmail account you want to send application emails from.</p>
+        <button id="auth-btn" class="secondary-btn">
+            Connect Google Account
+        </button>
+    </div>
+
+    <!-- Main Section -->
+    <div class="main-section" id="main-section" style="display: none;">
+        <!-- User Email Bar -->
+        <div class="user-bar">
+            <span class="user-label">From Gmail:</span>
+            <span id="popup-user-email" class="user-email">...</span>
+        </div>
+
+        <!-- HR Email Input with Paste Button -->
+        <div class="input-group">
+            <label for="hr-email">HR / Hiring Manager Email</label>
+            <div class="input-with-paste">
+                <input type="email" id="hr-email" placeholder="e.g. hr@company.com">
+                <button id="paste-btn" class="paste-btn" title="Paste from clipboard">Paste</button>
+            </div>
+        </div>
+
+        <!-- Email Pattern / Template Selector -->
+        <div class="input-group">
+            <label for="pattern-select">Select Email Pattern</label>
+            <select id="pattern-select" class="pattern-dropdown">
+                <!-- Dynamically populated -->
+            </select>
+        </div>
+
+        <!-- Pattern Subject Preview Card -->
+        <div id="pattern-preview-card" class="preview-card">
+            <div class="preview-label">Pattern Subject:</div>
+            <div id="preview-subject-text" class="preview-subject">...</div>
+        </div>
+
+        <!-- Send Application Button -->
+        <button id="send-btn" class="primary-btn">
+            <span id="btn-text">Send Application (1 Credit)</span>
+            <div id="spinner" class="spinner" style="display:none;"></div>
+        </button>
+
+        <!-- Out of Credits Ad Box -->
+        <div id="ad-reward-box" class="ad-reward-box" style="display: none;">
+            <p class="ad-prompt-text">⚠️ 0 applications left today!</p>
+            <button id="watch-ad-btn" class="reward-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                <span>Watch Rewarded Ad (+5 Credits)</span>
+            </button>
+            <p class="ad-subtext">Opens a small dedicated window. Fast & smooth!</p>
+        </div>
+
+        <div class="footer-links">
+            <a href="#" id="options-link">Manage Templates</a>
+            <span class="dot">•</span>
+            <a href="#" id="manual-ad-link">Get +5 Credits</a>
+        </div>
+    </div>
+    
+    <p id="status-msg"></p>
+    <script src="popup.js"></script>
+</body>
+</html>

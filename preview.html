@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast Apply Extension - Clean White Design & Rewarded Ad Preview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+            padding: 35px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* DARK PAGE OVERRIDE FOR DARK THEMES */
+        body.page-dark-bg {
+            background: #090d16;
+            color: #f8fafc;
+        }
+        body.page-dark-bg h1 { color: #f8fafc; }
+        body.page-dark-bg p.subtitle { color: #94a3b8; }
+        body.page-dark-bg .theme-selector-banner, 
+        body.page-dark-bg .vercel-preview-card, 
+        body.page-dark-bg .sim-controls {
+            background: #111827;
+            border-color: #1f2937;
+            color: #f8fafc;
+        }
+        body.page-dark-bg .ad-box-mock {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        .header-banner { text-align: center; max-width: 800px; margin-bottom: 25px; }
+        .badge {
+            display: inline-block;
+            background: rgba(37, 99, 235, 0.08);
+            color: #2563eb;
+            border: 1px solid rgba(37, 99, 235, 0.25);
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        h1 { font-size: 30px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+        p.subtitle { color: #475569; font-size: 14.5px; line-height: 1.5; }
+
+        /* THEME SELECTION BANNER */
+        .theme-selector-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+            border-radius: 14px;
+            padding: 12px 20px;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+        }
+        .theme-label { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+        .theme-btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .theme-picker-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .theme-picker-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .theme-picker-btn.active {
+            background: #2563eb;
+            border-color: #1d4ed8;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .theme-picker-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: 380px 560px;
+            gap: 32px;
+            max-width: 1020px;
+            width: 100%;
+            align-items: start;
+        }
+        @media (max-width: 950px) {
+            .preview-grid { grid-template-columns: 1fr; max-width: 580px; }
+        }
+        .card-wrapper { display: flex; flex-direction: column; gap: 12px; }
+        .card-title {
+            font-size: 12.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .interactive-tag {
+            background: rgba(37, 99, 235, 0.08);
+            color: #2563eb;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 6px;
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+
+        /* POPUP PREVIEW CONTAINER */
+        .popup-window {
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        /* THEME 1: CYBER SLATE */
+        .popup-window.theme-cyber { background-color: #0f172a; border-color: #334155; color: #f8fafc; }
+        .popup-window.theme-cyber .brand { color: #38bdf8; }
+        .popup-window.theme-cyber .primary-btn { background: linear-gradient(135deg, #0ea5e9, #2563eb); }
+        .popup-window.theme-cyber .credit-badge { background: rgba(14, 165, 233, 0.12); color: #38bdf8; border-color: rgba(56, 189, 248, 0.25); }
+
+        /* THEME 2: VIOLET NEON */
+        .popup-window.theme-violet { background-color: #0d0b18; border-color: #2e234c; color: #f8fafc; }
+        .popup-window.theme-violet .brand { color: #c084fc; }
+        .popup-window.theme-violet .brand svg { stroke: #c084fc; }
+        .popup-window.theme-violet .primary-btn { background: linear-gradient(135deg, #a855f7, #6366f1); }
+        .popup-window.theme-violet .credit-badge { background: rgba(168, 85, 247, 0.12); color: #c084fc; border-color: rgba(192, 132, 252, 0.3); }
+        .popup-window.theme-violet .user-bar, .popup-window.theme-violet input, .popup-window.theme-violet select { background: #18132a; border-color: #2e234c; color: #fff; }
+        .popup-window.theme-violet .user-email, .popup-window.theme-violet .paste-btn { color: #c084fc; }
+
+        /* THEME 3: EMERALD TECH */
+        .popup-window.theme-emerald { background-color: #071317; border-color: #1a3a43; color: #f8fafc; }
+        .popup-window.theme-emerald .brand { color: #34d399; }
+        .popup-window.theme-emerald .brand svg { stroke: #34d399; }
+        .popup-window.theme-emerald .primary-btn { background: linear-gradient(135deg, #10b981, #0284c7); }
+        .popup-window.theme-emerald .credit-badge { background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
+        .popup-window.theme-emerald .user-bar, .popup-window.theme-emerald input, .popup-window.theme-emerald select { background: #0f2329; border-color: #1a3a43; color: #fff; }
+        .popup-window.theme-emerald .user-email, .popup-window.theme-emerald .paste-btn { color: #34d399; }
+
+        /* THEME 4: SUNSET LUXURY */
+        .popup-window.theme-sunset { background-color: #170b13; border-color: #421d37; color: #f8fafc; }
+        .popup-window.theme-sunset .brand { color: #fb7185; }
+        .popup-window.theme-sunset .brand svg { stroke: #fb7185; }
+        .popup-window.theme-sunset .primary-btn { background: linear-gradient(135deg, #f43f5e, #f59e0b); }
+        .popup-window.theme-sunset .credit-badge { background: rgba(244, 63, 94, 0.12); color: #fb7185; border-color: rgba(251, 113, 133, 0.3); }
+        .popup-window.theme-sunset .user-bar, .popup-window.theme-sunset input, .popup-window.theme-sunset select { background: #261220; border-color: #421d37; color: #fff; }
+        .popup-window.theme-sunset .user-email, .popup-window.theme-sunset .paste-btn { color: #fb7185; }
+
+        /* THEME 5: CLEAN WHITE MINIMALIST */
+        .popup-window.theme-light { background-color: #ffffff; border-color: #e2e8f0; color: #0f172a; box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
+        .popup-window.theme-light .brand { color: #2563eb; }
+        .popup-window.theme-light .brand svg { stroke: #2563eb; }
+        .popup-window.theme-light .primary-btn { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+        .popup-window.theme-light .credit-badge { background: rgba(37, 99, 235, 0.08); color: #2563eb; border-color: rgba(37, 99, 235, 0.25); }
+        .popup-window.theme-light .user-bar { background: #f8fafc; border-color: #e2e8f0; }
+        .popup-window.theme-light .user-label { color: #64748b; }
+        .popup-window.theme-light .user-email { color: #2563eb; }
+        .popup-window.theme-light label { color: #334155; }
+        .popup-window.theme-light input, .popup-window.theme-light select { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
+        .popup-window.theme-light input:focus, .popup-window.theme-light select:focus { background: #ffffff; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2); }
+        .popup-window.theme-light .paste-btn { background: rgba(37, 99, 235, 0.08); border-color: rgba(37, 99, 235, 0.25); color: #2563eb; }
+        .popup-window.theme-light .preview-card { background: #f8fafc; border-color: #cbd5e1; }
+        .popup-window.theme-light .preview-label { color: #64748b; }
+        .popup-window.theme-light .preview-subject { color: #334155; }
+        .popup-window.theme-light .footer-links a { color: #64748b; border-bottom-color: #cbd5e1; }
+        .popup-window.theme-light .footer-links a:hover { color: #2563eb; border-bottom-color: #2563eb; }
+
+        .popup-window .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            padding-bottom: 10px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 17px;
+            color: #38bdf8;
+        }
+        .credit-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .credit-badge.low {
+            background: rgba(245, 158, 11, 0.15) !important;
+            border-color: rgba(245, 158, 11, 0.35) !important;
+            color: #d97706 !important;
+        }
+        .credit-badge.empty {
+            background: rgba(239, 68, 68, 0.18) !important;
+            border-color: rgba(239, 68, 68, 0.4) !important;
+            color: #dc2626 !important;
+            animation: pulseBadge 1.5s infinite;
+        }
+        @keyframes pulseBadge {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .user-bar {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 7px 10px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11.5px;
+        }
+        .user-label { color: #64748b; font-weight: 600; }
+        .user-email { color: #38bdf8; font-weight: 600; }
+        
+        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #cbd5e1; }
+        
+        .input-with-paste { display: flex; gap: 8px; margin-bottom: 12px; }
+        input[type="email"], select {
+            width: 100%;
+            padding: 9px 11px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: #fff;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .paste-btn {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: #38bdf8;
+            padding: 0 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .preview-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px dashed rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 9px 11px;
+            margin-bottom: 14px;
+        }
+        .preview-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+        .preview-subject { font-size: 12px; color: #94a3b8; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .primary-btn, .reward-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            color: white;
+        }
+
+        .reward-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+        }
+
+        .ad-reward-box {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .ad-prompt-text {
+            font-size: 12px;
+            color: #f87171;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .ad-subtext { font-size: 11px; color: #64748b; margin-top: 6px; }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 12px;
+        }
+        .footer-links a { color: #94a3b8; text-decoration: none; border-bottom: 1px dashed #475569; cursor: pointer; }
+        .status-msg { font-size: 12.5px; text-align: center; margin-top: 10px; min-height: 18px; font-weight: 500; }
+        .success { color: #059669; }
+        .error { color: #dc2626; }
+
+        /* VERCEL REWARD AD PREVIEW CARD */
+        .vercel-preview-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 28px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            text-align: center;
+            position: relative;
+            transition: all 0.3s;
+        }
+        .vercel-preview-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, #2563eb, #10b981, #6366f1);
+            border-radius: 20px 20px 0 0;
+        }
+        .ad-box-mock {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 14px;
+            padding: 22px;
+            margin: 18px 0;
+            transition: all 0.3s;
+        }
+
+        /* SIMULATION BAR */
+        .sim-controls {
+            margin-top: 30px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+            border-radius: 14px;
+            padding: 16px 22px;
+            max-width: 1020px;
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+        .state-btn {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .state-btn:hover { background: #e2e8f0; color: #0f172a; }
+    </style>
+</head>
+<body class="theme-light-mode">
+
+    <div class="header-banner">
+        <div class="badge">✨ CLEAN WHITE DESIGN MODE ACTIVE</div>
+        <h1>Fast Apply Extension - Production Preview</h1>
+        <p class="subtitle">Clean, crisp, modern white background aesthetic designed for maximum conversion.</p>
+    </div>
+
+    <!-- THEME PICKER SWITCHER -->
+    <div class="theme-selector-banner">
+        <span class="theme-label">Choose Theme:</span>
+        <div class="theme-btn-group">
+            <button class="theme-picker-btn active" data-theme="theme-light">
+                <span class="theme-picker-dot" style="background:#ffffff; border:1px solid #2563eb;"></span> 1. Clean White Minimalist (Active)
+            </button>
+            <button class="theme-picker-btn" data-theme="theme-cyber">
+                <span class="theme-picker-dot" style="background:#0ea5e9;"></span> 2. Cyberpunk Dark
+            </button>
+            <button class="theme-picker-btn" data-theme="theme-violet">
+                <span class="theme-picker-dot" style="background:#a855f7;"></span> 3. Midnight Violet
+            </button>
+            <button class="theme-picker-btn" data-theme="theme-emerald">
+                <span class="theme-picker-dot" style="background:#10b981;"></span> 4. Emerald Tech
+            </button>
+            <button class="theme-picker-btn" data-theme="theme-sunset">
+                <span class="theme-picker-dot" style="background:#f43f5e;"></span> 5. Sunset Luxury
+            </button>
+        </div>
+    </div>
+
+    <div class="preview-grid">
+        
+        <!-- EXTENSION POPUP PREVIEW -->
+        <div class="card-wrapper">
+            <div class="card-title">
+                <span>1. Extension Popup</span>
+                <span class="interactive-tag">Clean White Mode</span>
+            </div>
+            
+            <div id="sim-popup-window" class="popup-window theme-light">
+                <div class="header">
+                    <div class="brand">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+                        <span>Fast Apply</span>
+                    </div>
+                    <div class="credit-badge" id="sim-badge">
+                        <span>⚡</span>
+                        <span id="sim-credit-text">5</span> left today
+                    </div>
+                </div>
+
+                <div class="user-bar">
+                    <span class="user-label">From Gmail:</span>
+                    <span class="user-email">user.applicant@gmail.com</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="sim-hr-email">HR Email Address</label>
+                    <div class="input-with-paste">
+                        <input type="email" id="sim-hr-email" value="careers@techcorp.com">
+                        <button id="sim-paste-btn" class="paste-btn">Paste</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="sim-pattern-select">Select Email Pattern</label>
+                    <select id="sim-pattern-select">
+                        <option value="pat1">Full Stack Developer Pattern (Default)</option>
+                        <option value="pat2">Frontend Engineer Pattern</option>
+                        <option value="pat3">Senior Product Manager Pattern</option>
+                    </select>
+                </div>
+
+                <div class="preview-card">
+                    <div class="preview-label">Pattern Subject:</div>
+                    <div id="sim-preview-subject" class="preview-subject">Application for Full Stack Developer Position - John Doe</div>
+                </div>
+
+                <!-- Normal Send Button -->
+                <button id="sim-send-btn" class="primary-btn">
+                    <span id="sim-send-label">Send Application (1 Credit)</span>
+                </button>
+
+                <!-- Out of Credits Rewarded Ad Box -->
+                <div id="sim-ad-box" class="ad-reward-box" style="display: none;">
+                    <p class="ad-prompt-text">⚠️ 0 applications left today!</p>
+                    <button id="sim-watch-ad-btn" class="reward-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                        <span>Watch Rewarded Ad (+5 Credits)</span>
+                    </button>
+                    <p class="ad-subtext">Opens Option 2 dedicated small popup window!</p>
+                </div>
+
+                <div class="footer-links">
+                    <a href="#">Manage Templates</a>
+                    <span style="color:#cbd5e1;">•</span>
+                    <a id="sim-quick-ad-link">Get +5 Credits</a>
+                </div>
+
+                <p id="sim-status" class="status-msg"></p>
+            </div>
+        </div>
+
+        <!-- VERCEL REWARD AD PAGE PREVIEW -->
+        <div class="card-wrapper">
+            <div class="card-title">
+                <span>2. Option 2: Dedicated Popup Window</span>
+                <span class="interactive-tag" style="background:rgba(16, 185, 129, 0.1); color:#059669; border-color:rgba(16, 185, 129, 0.3);">Clean Ad Window</span>
+            </div>
+
+            <div class="vercel-preview-card" id="vercel-card">
+                <div style="font-size:28px; margin-bottom:6px;">⚡</div>
+                <h2 style="font-size:18px; font-weight:800; margin-bottom:4px; color:#0f172a;">Fast Apply Ad Window</h2>
+                <p style="font-size:12px; color:#64748b;">Hosted on Vercel (`https://fast-apply-rewards.vercel.app`)</p>
+
+                <div id="web-ad-container" class="ad-box-mock">
+                    <div id="web-ad-loading">
+                        <div style="font-size:13px; font-weight:700; color:#2563eb; margin-bottom:4px;">Google Rewarded Video Ad Playing...</div>
+                        <p id="web-timer-text" style="font-size:12px; color:#475569;">Playing video ad (4s remaining)</p>
+                    </div>
+                    <div id="web-ad-success" style="display:none;">
+                        <div style="font-size:30px; margin-bottom:4px;">🎉</div>
+                        <h3 style="color:#059669; font-size:15px; margin-bottom:4px; font-weight:700;">+5 Credits Unlocked!</h3>
+                        <p style="font-size:11.5px; color:#64748b;">Closing popup window automatically...</p>
+                    </div>
+                </div>
+
+                <button id="sim-manual-grant-btn" class="reward-btn" style="display:none;">Claim +5 Credits & Close Window</button>
+                <p style="font-size:11px; color:#64748b; margin-top:12px;">Zero user tab-switch frustration • MV3 Compliant</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TEST CONTROLLER -->
+    <div class="sim-controls">
+        <div style="font-size: 13px; color: #475569;">
+            <strong>Simulated Day:</strong> <span id="sim-date-display" style="color:#2563eb; font-weight:700;">Day 1 (Today)</span>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="state-btn" id="btn-use-all">Set Credits to 0</button>
+            <button class="state-btn" id="btn-next-day" style="background:#2563eb; color:#ffffff; border:none;">Simulate Next Day (Reset to 5)</button>
+            <button class="state-btn" id="btn-reset">Reset Test</button>
+        </div>
+    </div>
+
+    <script>
+        let credits = 5;
+        let dayCounter = 1;
+
+        const popupWindow = document.getElementById('sim-popup-window');
+        const themeBtns = document.querySelectorAll('.theme-picker-btn');
+
+        themeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const theme = btn.getAttribute('data-theme');
+                themeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                popupWindow.className = 'popup-window ' + theme;
+
+                if (theme === 'theme-light') {
+                    document.body.classList.remove('page-dark-bg');
+                } else {
+                    document.body.classList.add('page-dark-bg');
+                }
+            });
+        });
+
+        const creditText = document.getElementById('sim-credit-text');
+        const creditBadge = document.getElementById('sim-badge');
+        const sendBtn = document.getElementById('sim-send-btn');
+        const adBox = document.getElementById('sim-ad-box');
+        const watchAdBtn = document.getElementById('sim-watch-ad-btn');
+        const quickAdLink = document.getElementById('sim-quick-ad-link');
+        const statusMsg = document.getElementById('sim-status');
+        const dateDisplay = document.getElementById('sim-date-display');
+        const patternSelect = document.getElementById('sim-pattern-select');
+        const previewSubject = document.getElementById('sim-preview-subject');
+        const pasteBtn = document.getElementById('sim-paste-btn');
+        const hrEmailInput = document.getElementById('sim-hr-email');
+
+        const webLoading = document.getElementById('web-ad-loading');
+        const webSuccess = document.getElementById('web-ad-success');
+        const webTimerText = document.getElementById('web-timer-text');
+        const webGrantBtn = document.getElementById('sim-manual-grant-btn');
+
+        const patternSubjects = {
+            pat1: "Application for Full Stack Developer Position - John Doe",
+            pat2: "Application for Frontend Engineer Role - John Doe",
+            pat3: "Senior Product Manager Application & CV - John Doe"
+        };
+
+        patternSelect.addEventListener('change', () => {
+            previewSubject.textContent = patternSubjects[patternSelect.value] || patternSubjects.pat1;
+        });
+
+        pasteBtn.addEventListener('click', () => {
+            hrEmailInput.value = "hr.hiring@globaltech.io";
+            showStatus("Pasted 'hr.hiring@globaltech.io' from clipboard!", 'success');
+        });
+
+        function updateUI() {
+            creditText.textContent = credits;
+            creditBadge.className = 'credit-badge';
+
+            if (credits <= 0) {
+                creditBadge.classList.add('empty');
+                sendBtn.style.display = 'none';
+                adBox.style.display = 'block';
+            } else {
+                sendBtn.style.display = 'flex';
+                adBox.style.display = 'none';
+                if (credits <= 2) creditBadge.classList.add('low');
+            }
+        }
+
+        // Send Email simulation
+        sendBtn.addEventListener('click', () => {
+            if (credits <= 0) {
+                updateUI();
+                return;
+            }
+            credits--;
+            updateUI();
+            showStatus(`✓ Email sent! ${credits} credits left.`, 'success');
+        });
+
+        // Watch Ad simulation (Option 2 Dedicated Window)
+        function startAdSimulation() {
+            webLoading.style.display = 'block';
+            webSuccess.style.display = 'none';
+            webGrantBtn.style.display = 'none';
+            
+            let seconds = 4;
+            webTimerText.textContent = `Playing video ad (${seconds}s remaining)...`;
+
+            const interval = setInterval(() => {
+                seconds--;
+                if (seconds > 0) {
+                    webTimerText.textContent = `Playing video ad (${seconds}s remaining)...`;
+                } else {
+                    clearInterval(interval);
+                    webLoading.style.display = 'none';
+                    webSuccess.style.display = 'block';
+                    webGrantBtn.style.display = 'block';
+                    
+                    credits += 5;
+                    updateUI();
+                    showStatus('🎉 +5 Credits unlocked from Rewarded Ad Window!', 'success');
+                }
+            }, 800);
+        }
+
+        watchAdBtn.addEventListener('click', startAdSimulation);
+        quickAdLink.addEventListener('click', startAdSimulation);
+
+        document.getElementById('btn-next-day').addEventListener('click', () => {
+            dayCounter++;
+            dateDisplay.textContent = `Day ${dayCounter} (New Calendar Day)`;
+            credits = 5;
+            updateUI();
+            showStatus('🌅 New day started: Daily quota cleanly reset to 5 credits.', 'success');
+        });
+
+        document.getElementById('btn-use-all').addEventListener('click', () => {
+            credits = 0;
+            updateUI();
+            showStatus('Credits set to 0. Option 2 Rewarded Ad box is active.', 'error');
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            credits = 5;
+            dayCounter = 1;
+            dateDisplay.textContent = `Day 1 (Today)`;
+            updateUI();
+            showStatus('Reset to initial state (5 credits).', 'success');
+        });
+
+        function showStatus(text, type) {
+            statusMsg.textContent = text;
+            statusMsg.className = 'status-msg ' + type;
+            setTimeout(() => { if (statusMsg.className.includes(type)) statusMsg.textContent = ''; }, 4000);
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
