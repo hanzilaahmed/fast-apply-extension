@@ -1,8 +1,5 @@
 function getBase64EncodedEmail(to, subject, body, cvName, cvMimeType, cvBase64) {
-    // Generate a unique boundary for MIME multi-part message
     const boundary = "boundary_fast_apply_" + Date.now().toString(16);
-    
-    // Use UTF-8 base64 encoding for subject to allow special chars
     const base64Subject = btoa(unescape(encodeURIComponent(subject)));
     
     let message = `To: ${to}\r\n`;
@@ -10,34 +7,29 @@ function getBase64EncodedEmail(to, subject, body, cvName, cvMimeType, cvBase64) 
     message += `MIME-Version: 1.0\r\n`;
     message += `Content-Type: multipart/mixed; boundary="${boundary}"\r\n\r\n`;
 
-    // 1. Text part
     message += `--${boundary}\r\n`;
     message += `Content-Type: text/plain; charset="UTF-8"\r\n`;
     message += `Content-Transfer-Encoding: 7bit\r\n\r\n`;
     message += `${body}\r\n\r\n`;
 
-    // 2. Attachment part (if present)
     if (cvName && cvBase64 && cvMimeType) {
         message += `--${boundary}\r\n`;
         message += `Content-Type: ${cvMimeType}; name="${cvName}"\r\n`;
         message += `Content-Disposition: attachment; filename="${cvName}"\r\n`;
         message += `Content-Transfer-Encoding: base64\r\n\r\n`;
-        
-        // Chunk base64 into 76 chars per line for standard MIME format (RFC 2045)
         let b64Chunks = cvBase64.match(/.{1,76}/g) || [];
         message += b64Chunks.join("\r\n") + "\r\n\r\n";
     }
 
     message += `--${boundary}--\r\n`;
     
-    // Base64url encode the entire MIME message string
     return btoa(unescape(encodeURIComponent(message)))
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/, '');
 }
 
-// Helper: Check & perform daily reset (5 base credits, reset if new day, capped at 5)
+// Helper: Check & perform daily reset
 function getVerifiedCredits(callback) {
     const todayStr = new Date().toDateString();
     chrome.storage.local.get(['credits', 'lastResetDate'], (res) => {
@@ -45,7 +37,6 @@ function getVerifiedCredits(callback) {
         let lastResetDate = res.lastResetDate;
 
         if (lastResetDate !== todayStr) {
-            // New day: reset back to baseline 5 (does not accumulate)
             credits = 5;
             lastResetDate = todayStr;
             chrome.storage.local.set({ credits: 5, lastResetDate: todayStr }, () => {
@@ -64,7 +55,28 @@ function getVerifiedCredits(callback) {
     });
 }
 
-// 1. Listen for internal messages from popup
+// Force a fresh OAuth token - clears stale cached token first
+// This ensures emails always send from the currently selected Gmail account
+function getFreshAuthToken(callback) {
+    chrome.identity.getAuthToken({ interactive: false }, (staleToken) => {
+        if (staleToken) {
+            // Remove the old cached token first
+            chrome.identity.removeCachedAuthToken({ token: staleToken }, () => {
+                // Now get a fresh token for the currently active Google account
+                chrome.identity.getAuthToken({ interactive: true }, (freshToken) => {
+                    callback(freshToken, chrome.runtime.lastError);
+                });
+            });
+        } else {
+            // No cached token - just get one interactively
+            chrome.identity.getAuthToken({ interactive: true }, (freshToken) => {
+                callback(freshToken, chrome.runtime.lastError);
+            });
+        }
+    });
+}
+
+// Listen for internal messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'send_email') {
         getVerifiedCredits((currentCredits) => {
@@ -73,7 +85,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 return;
             }
 
-            // Get settings and selected pattern
             chrome.storage.local.get(['subject', 'body', 'cvName', 'cvBase64', 'cvMimeType'], (settings) => {
                 const mailSubject = request.subject || settings.subject;
                 const mailBody = request.body || settings.body;
@@ -83,15 +94,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     return;
                 }
 
-                // Determine CV to attach (pattern-specific or global default)
+                // Use pattern-specific CV if attached, otherwise fall back to global default CV
                 const sendCvName = request.cvName || settings.cvName;
                 const sendCvBase64 = request.cvBase64 || settings.cvBase64;
                 const sendCvMimeType = request.cvMimeType || settings.cvMimeType;
 
-                // Check auth token
-                chrome.identity.getAuthToken({ interactive: false }, (token) => {
-                    if (chrome.runtime.lastError || !token) {
-                        // Fallback: Open Gmail Web Compose with prefilled To, Subject, Body
+                // Get fresh OAuth token (clears old cached token so correct Gmail account is always used)
+                getFreshAuthToken((token, err) => {
+                    if (err || !token) {
+                        // Fallback: Open Gmail Web Compose tab
                         const composeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(request.hrEmail)}&su=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
                         chrome.tabs.create({ url: composeUrl });
 
@@ -102,26 +113,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         return;
                     }
 
-                    // Build MIME email string for Gmail API
+                    // Build MIME email and send via Gmail API
                     const rawMessage = getBase64EncodedEmail(
-                        request.hrEmail, 
-                        mailSubject, 
-                        mailBody, 
-                        sendCvName, 
-                        sendCvMimeType, 
+                        request.hrEmail,
+                        mailSubject,
+                        mailBody,
+                        sendCvName,
+                        sendCvMimeType,
                         sendCvBase64
                     );
 
-                    // Send via Gmail API
                     fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
                         method: 'POST',
                         headers: {
                             'Authorization': 'Bearer ' + token,
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            raw: rawMessage
-                        })
+                        body: JSON.stringify({ raw: rawMessage })
                     })
                     .then(res => {
                         if (!res.ok) {
@@ -161,7 +169,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-// 2. Listen for external messages from Vercel Rewarded Ad Page
+// Listen for external messages from Vercel Rewarded Ad Page
 chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
     if (request.action === 'ADD_REWARD_CREDITS') {
         getVerifiedCredits((currentCredits) => {
@@ -176,7 +184,7 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
     }
     
     if (request.action === 'PING_EXTENSION') {
-        sendResponse({ success: true, version: '1.1.0' });
+        sendResponse({ success: true, version: '1.1.2' });
         return true;
     }
 });

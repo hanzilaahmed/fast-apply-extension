@@ -204,23 +204,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 showStatus('Please enter a valid Gmail address.', 'error');
                 return;
             }
-            chrome.storage.local.set({ userEmail: emailVal }, () => {
-                if (userEmailText) userEmailText.textContent = emailVal;
-                if (authSection) authSection.style.display = 'none';
-                if (mainSection) mainSection.style.display = 'block';
-                loadPatterns();
-                syncCredits();
-                showStatus('Gmail address saved!', 'success');
+            // Revoke old cached OAuth token before switching account
+            chrome.identity.getAuthToken({ interactive: false }, (oldToken) => {
+                const doSave = () => {
+                    chrome.storage.local.set({ userEmail: emailVal }, () => {
+                        if (userEmailText) userEmailText.textContent = emailVal;
+                        if (authSection) authSection.style.display = 'none';
+                        if (mainSection) mainSection.style.display = 'block';
+                        loadPatterns();
+                        syncCredits();
+                        showStatus('Gmail address saved! Please reconnect with Google.', 'success');
+                    });
+                };
+                if (oldToken) {
+                    chrome.identity.removeCachedAuthToken({ token: oldToken }, doSave);
+                } else {
+                    doSave();
+                }
             });
         });
     }
 
     if (editEmailBtn) {
         editEmailBtn.addEventListener('click', () => {
+            // Revoke cached OAuth token so next login uses newly selected Google account
+            chrome.identity.getAuthToken({ interactive: false }, (oldToken) => {
+                if (oldToken) {
+                    chrome.identity.removeCachedAuthToken({ token: oldToken }, () => {
+                        console.log('Cleared cached OAuth token for account switch.');
+                    });
+                }
+            });
             if (authSection) authSection.style.display = 'block';
             if (mainSection) mainSection.style.display = 'none';
             if (userEmailText && userEmailText.textContent && userEmailText.textContent.includes('@')) {
-                manualEmailInput.value = userEmailText.textContent;
+                if (manualEmailInput) manualEmailInput.value = userEmailText.textContent;
             }
         });
     }
