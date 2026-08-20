@@ -307,7 +307,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 action: 'send_email',
                 hrEmail: hrEmail,
                 subject: selectedPattern ? selectedPattern.subject : null,
-                body: selectedPattern ? selectedPattern.body : null
+                body: selectedPattern ? selectedPattern.body : null,
+                cvName: selectedPattern ? selectedPattern.cvName : null,
+                cvBase64: selectedPattern ? selectedPattern.cvBase64 : null,
+                cvMimeType: selectedPattern ? selectedPattern.cvMimeType : null
             }, (response) => {
                 sendBtn.disabled = false;
                 if (btnText) btnText.textContent = 'Send Application (1 Credit)';
@@ -324,7 +327,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     showStatus((response && response.error) || 'Failed to send email.', 'error');
                 } else {
-                    showStatus('✓ Application & CV Sent Successfully!', 'success');
+                    if (response.openedGmailWeb) {
+                        showStatus('✓ Application Ready! Opened Gmail Web Compose in new tab.', 'success');
+                    } else {
+                        showStatus('✓ Application & CV Sent Successfully!', 'success');
+                    }
                     if (hrEmailInput) hrEmailInput.value = '';
                     if (typeof response.remainingCredits !== 'undefined') {
                         currentCredits = response.remainingCredits;

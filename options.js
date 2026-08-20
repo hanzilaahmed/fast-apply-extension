@@ -15,53 +15,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const patternNameInput = document.getElementById('pattern-name');
     const patternSubjectInput = document.getElementById('pattern-subject');
     const patternBodyInput = document.getElementById('pattern-body');
+    const patternCvUpload = document.getElementById('pattern-cv-upload');
+    const patternCvNameDisplay = document.getElementById('pattern-cv-name-display');
     const savePatternBtn = document.getElementById('save-pattern-btn');
     const cancelPatternBtn = document.getElementById('cancel-pattern-btn');
 
     let base64CV = null;
     let cvMimeType = null;
     let cvName = null;
+
+    let tempPatternCvBase64 = null;
+    let tempPatternCvMimeType = null;
+    let tempPatternCvName = null;
+
     let patterns = [];
     let editingPatternId = null;
 
-    // Check Google Auth Status
-    checkAuthStatus();
-
-    function checkAuthStatus() {
-        chrome.identity.getAuthToken({ interactive: false }, (token) => {
-            if (token) {
-                // Fetch user info from Google API
-                fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.email) {
-                        userEmailDisplay.textContent = data.email;
-                        authBtn.textContent = 'Connected ✓';
-                        authBtn.style.background = 'rgba(16, 185, 129, 0.15)';
-                        authBtn.style.color = '#34d399';
-                        authBtn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-                    }
-                })
-                .catch(() => {
-                    userEmailDisplay.textContent = 'Connected to Google Account';
-                });
-            } else {
-                userEmailDisplay.textContent = 'Not Authenticated';
-            }
-        });
-    }
+    // Check saved user email
+    chrome.storage.local.get(['userEmail'], (res) => {
+        if (res.userEmail) {
+            userEmailDisplay.textContent = res.userEmail;
+            authBtn.textContent = 'Connected ✓';
+            authBtn.style.background = '#d1fae5';
+            authBtn.style.color = '#059669';
+            authBtn.style.borderColor = '#a7f3d0';
+        } else {
+            userEmailDisplay.textContent = 'Not Connected';
+        }
+    });
 
     authBtn.addEventListener('click', () => {
-        chrome.identity.getAuthToken({ interactive: true }, (token) => {
-            if (token) {
-                checkAuthStatus();
-                showStatus('Successfully connected Google account!', 'success');
-            } else {
-                showStatus('Authentication failed.', 'error');
-            }
-        });
+        const input = prompt('Enter your Gmail address:', userEmailDisplay.textContent.includes('@') ? userEmailDisplay.textContent : 'yourname@gmail.com');
+        if (input && input.includes('@')) {
+            chrome.storage.local.set({ userEmail: input.trim() }, () => {
+                userEmailDisplay.textContent = input.trim();
+                authBtn.textContent = 'Connected ✓';
+                authBtn.style.background = '#d1fae5';
+                authBtn.style.color = '#059669';
+                authBtn.style.borderColor = '#a7f3d0';
+                showStatus('Gmail address saved!', 'success');
+            });
+        }
     });
 
     // Load saved settings & patterns
@@ -69,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.rewardWebUrl) rewardUrlInput.value = res.rewardWebUrl;
         
         if (res.cvName) {
-            fileNameDisplay.textContent = `Current CV: ${res.cvName}`;
+            fileNameDisplay.textContent = `Default CV: ${res.cvName}`;
             base64CV = res.cvBase64;
             cvMimeType = res.cvMimeType;
             cvName = res.cvName;
@@ -79,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.patterns && Array.isArray(res.patterns) && res.patterns.length > 0) {
             patterns = res.patterns;
         } else {
-            // Migration / Default initial patterns
+            // Default initial patterns
             patterns = [
                 {
                     id: 'pat_' + Date.now(),
@@ -102,25 +96,49 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPatterns();
     });
 
-    // Handle CV file selection
-    cvInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    // Handle Global Default CV file selection
+    if (cvInput) {
+        cvInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        fileNameDisplay.textContent = `Selected: ${file.name}`;
-        
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            const result = evt.target.result;
-            const matches = result.match(/^data:(.*);base64,(.*)$/);
-            if (matches && matches.length === 3) {
-                cvMimeType = matches[1];
-                base64CV = matches[2];
-                cvName = file.name;
-            }
-        };
-        reader.readAsDataURL(file);
-    });
+            fileNameDisplay.textContent = `Selected Default CV: ${file.name}`;
+            
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const result = evt.target.result;
+                const matches = result.match(/^data:(.*);base64,(.*)$/);
+                if (matches && matches.length === 3) {
+                    cvMimeType = matches[1];
+                    base64CV = matches[2];
+                    cvName = file.name;
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Handle Pattern-Specific CV file selection
+    if (patternCvUpload) {
+        patternCvUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            patternCvNameDisplay.textContent = `Pattern CV Attached: ${file.name}`;
+            
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const result = evt.target.result;
+                const matches = result.match(/^data:(.*);base64,(.*)$/);
+                if (matches && matches.length === 3) {
+                    tempPatternCvMimeType = matches[1];
+                    tempPatternCvBase64 = matches[2];
+                    tempPatternCvName = file.name;
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 
     // Render Pattern Cards
     function renderPatterns() {
@@ -128,6 +146,9 @@ document.addEventListener('DOMContentLoaded', () => {
         patterns.forEach(pat => {
             const card = document.createElement('div');
             card.className = `pattern-card ${pat.isDefault ? 'default-pattern' : ''}`;
+            
+            const cvLabel = pat.cvName ? `📄 Attached CV: ${pat.cvName}` : `📄 Uses Default CV`;
+
             card.innerHTML = `
                 <div class="pattern-card-header">
                     <div class="pattern-name">
@@ -141,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="pattern-subject-preview"><strong>Subject:</strong> ${pat.subject}</div>
+                <div class="pattern-cv-preview">${cvLabel}</div>
                 <div class="pattern-body-preview">${pat.body.replace(/\n/g, ' ')}</div>
             `;
             patternsList.appendChild(card);
@@ -181,6 +203,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openEditor(patternId) {
         editingPatternId = patternId;
+        tempPatternCvBase64 = null;
+        tempPatternCvMimeType = null;
+        tempPatternCvName = null;
+
+        if (patternCvUpload) patternCvUpload.value = '';
+
         if (patternId) {
             const p = patterns.find(item => item.id === patternId);
             if (p) {
@@ -188,12 +216,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 patternNameInput.value = p.name;
                 patternSubjectInput.value = p.subject;
                 patternBodyInput.value = p.body;
+                
+                if (p.cvName) {
+                    tempPatternCvName = p.cvName;
+                    tempPatternCvBase64 = p.cvBase64;
+                    tempPatternCvMimeType = p.cvMimeType;
+                    patternCvNameDisplay.textContent = `Current Pattern CV: ${p.cvName}`;
+                } else {
+                    patternCvNameDisplay.textContent = 'Optional: Attach a specific CV for this role (uses Default CV if empty).';
+                }
             }
         } else {
             editorTitle.textContent = 'Add New Email Pattern';
             patternNameInput.value = '';
             patternSubjectInput.value = '';
             patternBodyInput.value = '';
+            patternCvNameDisplay.textContent = 'Optional: Attach a specific CV for this role (uses Default CV if empty).';
         }
         patternEditor.style.display = 'block';
         patternEditor.scrollIntoView({ behavior: 'smooth' });
@@ -220,6 +258,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 p.name = name;
                 p.subject = subject;
                 p.body = body;
+                if (tempPatternCvName) {
+                    p.cvName = tempPatternCvName;
+                    p.cvBase64 = tempPatternCvBase64;
+                    p.cvMimeType = tempPatternCvMimeType;
+                }
             }
         } else {
             const isFirst = patterns.length === 0;
@@ -228,6 +271,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: name,
                 subject: subject,
                 body: body,
+                cvName: tempPatternCvName,
+                cvBase64: tempPatternCvBase64,
+                cvMimeType: tempPatternCvMimeType,
                 isDefault: isFirst
             });
         }
@@ -264,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cvBase64: base64CV,
             cvMimeType: cvMimeType,
             cvName: cvName,
-            rewardWebUrl: rewardUrl || 'https://fast-apply-rewards.vercel.app'
+            rewardWebUrl: rewardUrl || 'https://fast-apply-extension.vercel.app'
         }, () => {
             saveAllBtn.textContent = 'Save All Settings';
             saveAllBtn.disabled = false;

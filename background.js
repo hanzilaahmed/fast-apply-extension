@@ -73,7 +73,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 return;
             }
 
-            // 1. Get the settings or use custom subject/body passed from selected pattern
+            // Get settings and selected pattern
             chrome.storage.local.get(['subject', 'body', 'cvName', 'cvBase64', 'cvMimeType'], (settings) => {
                 const mailSubject = request.subject || settings.subject;
                 const mailBody = request.body || settings.body;
@@ -83,24 +83,36 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     return;
                 }
 
-                // 2. Get auth token
+                // Determine CV to attach (pattern-specific or global default)
+                const sendCvName = request.cvName || settings.cvName;
+                const sendCvBase64 = request.cvBase64 || settings.cvBase64;
+                const sendCvMimeType = request.cvMimeType || settings.cvMimeType;
+
+                // Check auth token
                 chrome.identity.getAuthToken({ interactive: false }, (token) => {
                     if (chrome.runtime.lastError || !token) {
-                        sendResponse({ success: false, error: 'Not authenticated with Google.' });
+                        // Fallback: Open Gmail Web Compose with prefilled To, Subject, Body
+                        const composeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(request.hrEmail)}&su=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
+                        chrome.tabs.create({ url: composeUrl });
+
+                        const remainingCredits = Math.max(0, currentCredits - 1);
+                        chrome.storage.local.set({ credits: remainingCredits }, () => {
+                            sendResponse({ success: true, remainingCredits: remainingCredits, openedGmailWeb: true });
+                        });
                         return;
                     }
 
-                    // 3. Build email string
+                    // Build MIME email string for Gmail API
                     const rawMessage = getBase64EncodedEmail(
                         request.hrEmail, 
                         mailSubject, 
                         mailBody, 
-                        settings.cvName, 
-                        settings.cvMimeType, 
-                        settings.cvBase64
+                        sendCvName, 
+                        sendCvMimeType, 
+                        sendCvBase64
                     );
 
-                    // 4. Send via Gmail API
+                    // Send via Gmail API
                     fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
                         method: 'POST',
                         headers: {
@@ -120,21 +132,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         return res.json();
                     })
                     .then(data => {
-                        // Decrement credit on successful dispatch
                         const remainingCredits = Math.max(0, currentCredits - 1);
                         chrome.storage.local.set({ credits: remainingCredits }, () => {
                             sendResponse({ success: true, data: data, remainingCredits: remainingCredits });
                         });
                     })
                     .catch(err => {
-                        console.error('Gmail API Error:', err);
-                        sendResponse({ success: false, error: err.message || 'Network/API Error.' });
+                        console.error('Gmail API Error, fallback to Gmail Web Compose:', err);
+                        const composeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(request.hrEmail)}&su=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
+                        chrome.tabs.create({ url: composeUrl });
+
+                        const remainingCredits = Math.max(0, currentCredits - 1);
+                        chrome.storage.local.set({ credits: remainingCredits }, () => {
+                            sendResponse({ success: true, remainingCredits: remainingCredits, openedGmailWeb: true });
+                        });
                     });
                 });
             });
         });
-        
-        return true; // Asynchronous response
+        return true; // Async response
     }
 
     if (request.action === 'get_credits') {
@@ -145,21 +161,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-// 2. Listen for external messages from your Vercel Rewarded Ad webpage
+// 2. Listen for external messages from Vercel Rewarded Ad Page
 chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
-    if (request.action === 'ADD_REWARD_CREDITS' || request.action === 'REWARD_GRANTED') {
+    if (request.action === 'ADD_REWARD_CREDITS') {
         getVerifiedCredits((currentCredits) => {
-            const newCredits = currentCredits + 5;
-            chrome.storage.local.set({ credits: newCredits }, () => {
-                console.log(`[Fast Apply] Rewarded Ad completed! Added +5 credits. Total: ${newCredits}`);
-                sendResponse({ success: true, message: '+5 credits added successfully!', newCredits: newCredits });
+            const addedCredits = request.amount || 5;
+            const newTotal = currentCredits + addedCredits;
+            
+            chrome.storage.local.set({ credits: newTotal }, () => {
+                sendResponse({ success: true, newBalance: newTotal });
             });
         });
         return true;
     }
-
+    
     if (request.action === 'PING_EXTENSION') {
-        sendResponse({ success: true, status: 'CONNECTED', extensionId: chrome.runtime.id });
+        sendResponse({ success: true, version: '1.1.0' });
         return true;
     }
 });
