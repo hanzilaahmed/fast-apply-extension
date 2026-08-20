@@ -59,32 +59,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Paste from Clipboard feature
-    pasteBtn.addEventListener('click', async () => {
-        try {
-            const text = await navigator.clipboard.readText();
-            if (text && text.includes('@')) {
-                hrEmailInput.value = text.trim();
-                showStatus('Pasted email from clipboard!', 'success');
-            } else if (text) {
-                hrEmailInput.value = text.trim();
-                showStatus('Pasted text from clipboard.', 'success');
-            } else {
-                showStatus('Clipboard is empty.', 'error');
+    if (pasteBtn) {
+        pasteBtn.addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text && text.includes('@')) {
+                    hrEmailInput.value = text.trim();
+                    showStatus('Pasted email from clipboard!', 'success');
+                } else if (text) {
+                    hrEmailInput.value = text.trim();
+                    showStatus('Pasted text from clipboard.', 'success');
+                } else {
+                    showStatus('Clipboard is empty.', 'error');
+                }
+            } catch (err) {
+                hrEmailInput.focus();
+                document.execCommand('paste');
+                showStatus('Focused HR Email input.', 'success');
             }
-        } catch (err) {
-            hrEmailInput.focus();
-            document.execCommand('paste');
-            showStatus('Focused HR Email input.', 'success');
+        });
+    }
+
+    // Open Options / Manage Templates Page Helper
+    function openOptionsPage() {
+        if (chrome.runtime.openOptionsPage) {
+            chrome.runtime.openOptionsPage();
+        } else {
+            window.open(chrome.runtime.getURL('options.html'));
         }
-    });
+    }
 
-    // Open Options page
-    optionsLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        chrome.runtime.openOptionsPage();
-    });
+    if (manageTemplatesBtn) manageTemplatesBtn.addEventListener('click', openOptionsPage);
+    if (editPatternsLink) editPatternsLink.addEventListener('click', (e) => { e.preventDefault(); openOptionsPage(); });
+    if (optionsLink) optionsLink.addEventListener('click', (e) => { e.preventDefault(); openOptionsPage(); });
 
-    // Option 2: Open Dedicated Popup Window for Rewarded Ad
+    // Open Dedicated Popup Window for Rewarded Ad
     function openRewardedAdPage() {
         chrome.storage.local.get(['rewardWebUrl'], (res) => {
             const defaultUrl = 'https://fast-apply-extension.vercel.app';
@@ -113,11 +122,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    watchAdBtn.addEventListener('click', openRewardedAdPage);
-    manualAdLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        openRewardedAdPage();
-    });
+    if (watchAdBtn) watchAdBtn.addEventListener('click', openRewardedAdPage);
+    if (manualAdLink) {
+        manualAdLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            openRewardedAdPage();
+        });
+    }
 
     // Load patterns dropdown
     function loadPatterns() {
@@ -150,12 +161,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateSelectedPattern() {
         const selectedId = patternSelect.value;
         selectedPattern = loadedPatterns.find(p => p.id === selectedId) || loadedPatterns[0];
-        if (selectedPattern) {
+        if (selectedPattern && previewSubjectText) {
             previewSubjectText.textContent = selectedPattern.subject;
         }
     }
 
-    patternSelect.addEventListener('change', updateSelectedPattern);
+    if (patternSelect) patternSelect.addEventListener('change', updateSelectedPattern);
 
     // Refresh and sync credits
     function syncCredits() {
@@ -168,39 +179,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateCreditUI(credits) {
+        if (!creditCount || !creditBadge) return;
         creditCount.textContent = credits;
         creditBadge.className = 'credit-badge';
 
         if (credits <= 0) {
             creditBadge.classList.add('empty');
-            sendBtn.style.display = 'none';
-            adRewardBox.style.display = 'block';
+            if (sendBtn) sendBtn.style.display = 'none';
+            if (adRewardBox) adRewardBox.style.display = 'block';
         } else {
-            sendBtn.style.display = 'flex';
-            adRewardBox.style.display = 'none';
+            if (sendBtn) sendBtn.style.display = 'flex';
+            if (adRewardBox) adRewardBox.style.display = 'none';
             if (credits <= 2) {
                 creditBadge.classList.add('low');
             }
         }
-    }
-
-    // Open Options / Manage Templates Page
-    function openOptionsPage() {
-        if (chrome.runtime.openOptionsPage) {
-            chrome.runtime.openOptionsPage();
-        } else {
-            window.open(chrome.runtime.getURL('options.html'));
-        }
-    }
-
-    if (manageTemplatesBtn) {
-        manageTemplatesBtn.addEventListener('click', openOptionsPage);
-    }
-    if (editPatternsLink) {
-        editPatternsLink.addEventListener('click', (e) => { e.preventDefault(); openOptionsPage(); });
-    }
-    if (optionsLink) {
-        optionsLink.addEventListener('click', (e) => { e.preventDefault(); openOptionsPage(); });
     }
 
     // Manual Email Setup & Edit Handlers
@@ -212,9 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             chrome.storage.local.set({ userEmail: emailVal }, () => {
-                userEmailText.textContent = emailVal;
-                authSection.style.display = 'none';
-                mainSection.style.display = 'block';
+                if (userEmailText) userEmailText.textContent = emailVal;
+                if (authSection) authSection.style.display = 'none';
+                if (mainSection) mainSection.style.display = 'block';
                 loadPatterns();
                 syncCredits();
                 showStatus('Gmail address saved!', 'success');
@@ -224,9 +217,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (editEmailBtn) {
         editEmailBtn.addEventListener('click', () => {
-            authSection.style.display = 'block';
-            mainSection.style.display = 'none';
-            if (userEmailText.textContent && userEmailText.textContent.includes('@')) {
+            if (authSection) authSection.style.display = 'block';
+            if (mainSection) mainSection.style.display = 'none';
+            if (userEmailText && userEmailText.textContent && userEmailText.textContent.includes('@')) {
                 manualEmailInput.value = userEmailText.textContent;
             }
         });
@@ -235,24 +228,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check saved user email or Google Auth
     chrome.storage.local.get(['userEmail'], (res) => {
         if (res.userEmail) {
-            userEmailText.textContent = res.userEmail;
-            authSection.style.display = 'none';
-            mainSection.style.display = 'block';
+            if (userEmailText) userEmailText.textContent = res.userEmail;
+            if (authSection) authSection.style.display = 'none';
+            if (mainSection) mainSection.style.display = 'block';
             loadPatterns();
             syncCredits();
         } else {
-            chrome.identity.getAuthToken({ interactive: false }, (token) => {
-                if (chrome.runtime.lastError || !token) {
-                    authSection.style.display = 'block';
-                    mainSection.style.display = 'none';
-                } else {
-                    authSection.style.display = 'none';
-                    mainSection.style.display = 'block';
-                    fetchUserProfileEmail(token);
-                    loadPatterns();
-                    syncCredits();
-                }
-            });
+            if (authSection) authSection.style.display = 'block';
+            if (mainSection) mainSection.style.display = 'none';
         }
     });
 
@@ -263,97 +246,102 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => res.json())
         .then(data => {
             if (data.email) {
-                userEmailText.textContent = data.email;
+                if (userEmailText) userEmailText.textContent = data.email;
                 chrome.storage.local.set({ userEmail: data.email });
-            } else {
-                userEmailText.textContent = 'Connected Account';
             }
         })
         .catch(() => {
-            userEmailText.textContent = 'Connected Account';
+            if (userEmailText) userEmailText.textContent = 'Connected Account';
         });
     }
 
-    authBtn.addEventListener('click', () => {
-        chrome.identity.getAuthToken({ interactive: true }, (token) => {
-            if (chrome.runtime.lastError || !token) {
-                // Fallback for local testing when OAuth Client ID is not registered
-                authSection.style.display = 'none';
-                mainSection.style.display = 'block';
-                const defaultEmail = 'your.email@gmail.com';
-                userEmailText.textContent = defaultEmail;
-                chrome.storage.local.set({ userEmail: defaultEmail });
-                loadPatterns();
-                syncCredits();
-                showStatus('Connected (Demo Mode)', 'success');
-            } else {
-                authSection.style.display = 'none';
-                mainSection.style.display = 'block';
-                fetchUserProfileEmail(token);
-                loadPatterns();
-                syncCredits();
-                showStatus('Connected with Google!', 'success');
-            }
+    if (authBtn) {
+        authBtn.addEventListener('click', () => {
+            // Attempt Google Identity API
+            chrome.identity.getAuthToken({ interactive: true }, (token) => {
+                if (chrome.runtime.lastError || !token) {
+                    // Fallback for local testing or un-registered extension ID
+                    const testEmail = 'your.email@gmail.com';
+                    chrome.storage.local.set({ userEmail: testEmail }, () => {
+                        if (userEmailText) userEmailText.textContent = testEmail;
+                        if (authSection) authSection.style.display = 'none';
+                        if (mainSection) mainSection.style.display = 'block';
+                        loadPatterns();
+                        syncCredits();
+                        showStatus('Connected (Demo Mode)', 'success');
+                    });
+                } else {
+                    if (authSection) authSection.style.display = 'none';
+                    if (mainSection) mainSection.style.display = 'block';
+                    fetchUserProfileEmail(token);
+                    loadPatterns();
+                    syncCredits();
+                    showStatus('Connected with Google!', 'success');
+                }
+            });
         });
-    });
+    }
 
     // Handle Send Application
-    sendBtn.addEventListener('click', () => {
-        if (currentCredits <= 0) {
-            updateCreditUI(0);
-            showStatus('You are out of credits for today. Please watch an ad.', 'error');
-            return;
-        }
-
-        const hrEmail = hrEmailInput.value.trim();
-        if (!hrEmail || !hrEmail.includes('@')) {
-            showStatus('Please enter a valid HR email.', 'error');
-            return;
-        }
-
-        if (!selectedPattern) {
-            updateSelectedPattern();
-        }
-
-        sendBtn.disabled = true;
-        btnText.textContent = 'Sending...';
-        spinner.style.display = 'block';
-        statusMsg.textContent = '';
-        
-        chrome.runtime.sendMessage({
-            action: 'send_email',
-            hrEmail: hrEmail,
-            subject: selectedPattern ? selectedPattern.subject : null,
-            body: selectedPattern ? selectedPattern.body : null
-        }, (response) => {
-            sendBtn.disabled = false;
-            btnText.textContent = 'Send Application (1 Credit)';
-            spinner.style.display = 'none';
-
-            if (chrome.runtime.lastError) {
-                showStatus('Internal Error: Could not connect to background.', 'error');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', () => {
+            if (currentCredits <= 0) {
+                updateCreditUI(0);
+                showStatus('You are out of credits for today. Please watch an ad.', 'error');
                 return;
             }
 
-            if (!response || !response.success) {
-                if (response && response.outOfCredits) {
-                    updateCreditUI(0);
-                }
-                showStatus((response && response.error) || 'Failed to send email.', 'error');
-            } else {
-                showStatus('✓ Application & CV Sent Successfully!', 'success');
-                hrEmailInput.value = '';
-                if (typeof response.remainingCredits !== 'undefined') {
-                    currentCredits = response.remainingCredits;
-                    updateCreditUI(currentCredits);
-                } else {
-                    syncCredits();
-                }
+            const hrEmail = hrEmailInput ? hrEmailInput.value.trim() : '';
+            if (!hrEmail || !hrEmail.includes('@')) {
+                showStatus('Please enter a valid HR email.', 'error');
+                return;
             }
+
+            if (!selectedPattern) {
+                updateSelectedPattern();
+            }
+
+            sendBtn.disabled = true;
+            if (btnText) btnText.textContent = 'Sending...';
+            if (spinner) spinner.style.display = 'block';
+            if (statusMsg) statusMsg.textContent = '';
+            
+            chrome.runtime.sendMessage({
+                action: 'send_email',
+                hrEmail: hrEmail,
+                subject: selectedPattern ? selectedPattern.subject : null,
+                body: selectedPattern ? selectedPattern.body : null
+            }, (response) => {
+                sendBtn.disabled = false;
+                if (btnText) btnText.textContent = 'Send Application (1 Credit)';
+                if (spinner) spinner.style.display = 'none';
+
+                if (chrome.runtime.lastError) {
+                    showStatus('Internal Error: Could not connect to background.', 'error');
+                    return;
+                }
+
+                if (!response || !response.success) {
+                    if (response && response.outOfCredits) {
+                        updateCreditUI(0);
+                    }
+                    showStatus((response && response.error) || 'Failed to send email.', 'error');
+                } else {
+                    showStatus('✓ Application & CV Sent Successfully!', 'success');
+                    if (hrEmailInput) hrEmailInput.value = '';
+                    if (typeof response.remainingCredits !== 'undefined') {
+                        currentCredits = response.remainingCredits;
+                        updateCreditUI(currentCredits);
+                    } else {
+                        syncCredits();
+                    }
+                }
+            });
         });
-    });
+    }
 
     function showStatus(text, type) {
+        if (!statusMsg) return;
         statusMsg.textContent = text;
         statusMsg.className = type;
         setTimeout(() => { if(statusMsg.className === type) statusMsg.textContent = ''; }, 4000);
