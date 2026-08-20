@@ -6,15 +6,15 @@
     <title>Fast Apply - Earn Rewarded Credits</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- 1. GOOGLE ADSENSE SCRIPT -->
+    <!-- GOOGLE ADSENSE SCRIPT -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8538587680168249" crossorigin="anonymous"></script>
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0f172a;
-            color: #f8fafc;
+            background: #f8fafc;
+            color: #0f172a;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -22,12 +22,12 @@
             padding: 20px;
         }
         .card {
-            background: #1e293b;
-            border: 1px solid #334155;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             width: 100%;
-            max-width: 440px;
+            max-width: 420px;
             padding: 28px;
             text-align: center;
             position: relative;
@@ -39,124 +39,106 @@
             top: 0; left: 0; right: 0; height: 5px;
             background: linear-gradient(90deg, #2563eb, #10b981, #6366f1);
         }
-        .header-tag {
-            display: inline-block;
-            background: rgba(37, 99, 235, 0.15);
-            color: #38bdf8;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            padding: 4px 14px;
-            border-radius: 99px;
-            font-size: 11.5px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
         }
         h1 {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 800;
-            color: #ffffff;
+            color: #0f172a;
             margin-bottom: 4px;
         }
         .subtitle {
             font-size: 13px;
-            color: #94a3b8;
+            color: #64748b;
             margin-bottom: 20px;
         }
-        
-        /* REAL GOOGLE AD CONTAINER AREA */
-        .ad-frame-wrapper {
-            background: #0f172a;
-            border: 1px dashed #475569;
+        .ad-container {
+            background: #f1f5f9;
+            border: 2px dashed #cbd5e1;
             border-radius: 14px;
-            padding: 16px;
+            padding: 20px 16px;
             margin-bottom: 20px;
-            min-height: 250px;
+            min-height: 220px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             position: relative;
         }
-
         .spinner {
             width: 36px;
             height: 36px;
-            border: 3.5px solid rgba(56, 189, 248, 0.2);
-            border-top-color: #38bdf8;
+            border: 3.5px solid rgba(37, 99, 235, 0.2);
+            border-top-color: #2563eb;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
         .ad-title {
-            font-size: 13.5px;
+            font-size: 14px;
             font-weight: 700;
-            color: #38bdf8;
+            color: #2563eb;
             margin-bottom: 4px;
         }
         .ad-timer {
-            font-size: 12.5px;
-            color: #cbd5e1;
+            font-size: 13px;
+            color: #475569;
         }
-
-        /* SUCCESS STATE */
         .success-box {
             display: none;
-            padding: 10px;
         }
         .success-box .success-icon {
-            font-size: 46px;
-            margin-bottom: 8px;
-        }
-        .success-box h2 {
-            font-size: 20px;
-            color: #34d399;
-            font-weight: 800;
+            font-size: 42px;
             margin-bottom: 6px;
         }
-        .success-box p {
-            font-size: 13px;
-            color: #94a3b8;
+        .success-box h2 {
+            font-size: 18px;
+            color: #059669;
+            font-weight: 800;
+            margin-bottom: 4px;
         }
-
+        .success-box p {
+            font-size: 12px;
+            color: #64748b;
+        }
         .claim-btn {
             background: linear-gradient(135deg, #10b981, #059669);
             color: #ffffff;
             border: none;
             width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
-            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+            transition: transform 0.15s ease;
         }
         .claim-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+            transform: translateY(-1px);
         }
-
-        .status-footer {
-            font-size: 11.5px;
-            color: #64748b;
-            margin-top: 16px;
+        .footer-note {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 14px;
         }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <div class="header-tag">⚡ Fast Apply Rewards</div>
-        <h1>Rewarded Ad Station</h1>
-        <p class="subtitle">Watch full ad below to claim +5 job application credits</p>
+        <div class="icon">⚡</div>
+        <h1>Fast Apply Rewards</h1>
+        <p class="subtitle">Watch full ad to unlock +5 job application credits</p>
 
-        <!-- AD CONTAINER BOX -->
-        <div class="ad-frame-wrapper" id="ad-frame-wrapper">
+        <div class="ad-container" id="ad-box">
             
-            <!-- 2. GOOGLE ADSENSE AD UNIT SLOT -->
+            <!-- GOOGLE ADSENSE AD UNIT SLOT -->
             <ins class="adsbygoogle"
                  style="display:block; width:100%; height:250px;"
                  data-ad-client="ca-pub-8538587680168249"
@@ -167,86 +149,80 @@
                  (adsbygoogle = window.adsbygoogle || []).push({});
             </script>
 
-            <!-- AD DISPLAY / TIMER OVERLAY -->
-            <div id="ad-loading-box">
+            <!-- Loading / Countdown State -->
+            <div id="ad-loading">
                 <div class="spinner"></div>
-                <div class="ad-title">Google Rewarded Ad Playing...</div>
-                <div class="ad-timer" id="timer-text">Watching ad (5s remaining)</div>
+                <div class="ad-title">Loading Rewarded Video Ad...</div>
+                <div class="ad-timer" id="timer-text">Please keep window focused (5s remaining)</div>
             </div>
 
-            <!-- SUCCESS REWARD BOX -->
-            <div id="ad-success-box" class="success-box">
+            <!-- Success State -->
+            <div id="ad-success" class="success-box">
                 <div class="success-icon">🎉</div>
                 <h2>+5 Credits Granted!</h2>
-                <p>Added to your Chrome Extension profile.</p>
+                <p>Credits added to your Fast Apply Chrome Extension.</p>
             </div>
-
         </div>
 
-        <button id="claim-btn" class="claim-btn" style="display: none;">Claim +5 Credits & Close Window</button>
+        <button id="claim-btn" class="claim-btn" style="display: none;">Claim +5 Credits & Close</button>
 
-        <p class="status-footer" id="status-footer">Connecting to Extension...</p>
+        <p class="footer-note" id="status-footer">Extension Status: Connecting...</p>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const extId = urlParams.get('extId');
-        
         const statusFooter = document.getElementById('status-footer');
-        const adLoadingBox = document.getElementById('ad-loading-box');
-        const adSuccessBox = document.getElementById('ad-success-box');
+        const adLoading = document.getElementById('ad-loading');
+        const adSuccess = document.getElementById('ad-success');
         const timerText = document.getElementById('timer-text');
         const claimBtn = document.getElementById('claim-btn');
 
-        // Ping extension
         if (extId && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
             chrome.runtime.sendMessage(extId, { action: 'PING_EXTENSION' }, (response) => {
                 if (response && response.status === 'CONNECTED') {
                     statusFooter.textContent = '✓ Connected to Fast Apply Extension';
-                    statusFooter.style.color = '#34d399';
+                    statusFooter.style.color = '#059669';
                 } else {
-                    statusFooter.textContent = '⚠️ Extension connection pending...';
+                    statusFooter.textContent = '⚠️ Extension response pending...';
                 }
             });
         } else {
-            statusFooter.textContent = 'ℹ Standalone Preview Mode';
+            statusFooter.textContent = 'ℹ Demo / Standalone Mode';
         }
 
-        // Timer simulation (or Google AdSense ad push callback)
-        let seconds = 5;
-        const interval = setInterval(() => {
-            seconds--;
-            if (seconds > 0) {
-                timerText.textContent = `Watching ad (${seconds}s remaining)`;
+        let countdown = 5;
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                timerText.textContent = `Please keep window focused (${countdown}s remaining)`;
             } else {
-                clearInterval(interval);
+                clearInterval(countdownInterval);
                 onAdCompleted();
             }
         }, 1000);
 
         function onAdCompleted() {
-            adLoadingBox.style.display = 'none';
-            adSuccessBox.style.display = 'block';
+            adLoading.style.display = 'none';
+            adSuccess.style.display = 'block';
             claimBtn.style.display = 'block';
-
-            // Send credits to Chrome Extension
-            grantCredits();
+            grantRewardToExtension();
         }
 
-        function grantCredits() {
+        function grantRewardToExtension() {
             if (extId && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
                 chrome.runtime.sendMessage(extId, { action: 'ADD_REWARD_CREDITS' }, (res) => {
                     if (res && res.success) {
-                        statusFooter.textContent = `✓ +5 Credits Added! Total: ${res.newCredits}`;
-                        statusFooter.style.color = '#34d399';
-                        setTimeout(() => { window.close(); }, 2500);
+                        statusFooter.textContent = `✓ +5 Credits Added! New Total: ${res.newCredits}`;
+                        statusFooter.style.color = '#059669';
+                        setTimeout(() => { window.close(); }, 2000);
                     }
                 });
             }
         }
 
         claimBtn.addEventListener('click', () => {
-            grantCredits();
+            grantRewardToExtension();
             setTimeout(() => { window.close(); }, 500);
         });
     </script>
